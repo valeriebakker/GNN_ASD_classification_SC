@@ -20,16 +20,15 @@ Scripts for converting raw diffusion MRI data into FA-weighted SC matrices.
 Contains the AAL2 atlas used for region-based parcellation.
 
 ### combine_csv.py
-Merges subject CSV files into a single phenotype file.
+Merges dataset CSV files into a single phenotype file.
 
 ### preproc_and_tractography.sh
 Full preprocessing pipeline:
 - DWI denoising and Gibbs removal
 - Eddy correction
 - Brain masking
-- Fiber orientation estimation (CSD)
+- Fiber orientation estimation and constrained spherical deconvolution (CSD)
 - Anatomically constrained tractography (ACT)
-- Streamline-to-region assignment
 - Creation of FA-weighted connectivity matrices
 
 This generates the SC features used by the GNN.
@@ -38,81 +37,67 @@ This generates the SC features used by the GNN.
 Wrapper script for running the preprocessing + tractography pipeline on all subjects.
 
 ### show_connectivitymatrix.py
-Utility for plotting individual or group-average SC matrices and inspecting the strongest connections.
+Script for plotting individual or group-average SC matrices and inspecting connections.
 
 
 ## GNN_model/
 Implements the population GNN, feature selection, harmonization, training, testing, and hyperparameter optimization.
 
 ### MAIN.py
-
-Main entry point:
-
-- Load SC features & phenotypic data
-- Apply optional ComBat harmonization
-- Perform feature selection
-- Build population graph
-- Train a GNN using cross-validation
-- Retrain final model on all development subjects
-- Run inductive testing on held-out subjects
-- Save metrics + plots
-
-### GNNModel.py
-Defines the GNN architecture:
-- GraphConv (default), GAT, GINE, or ChebConv
-- Edge + feature dropout
-- Sum-based message passing
-- LayerNorm + ReLU / PReLU
-- MLP classifier head
-
-Handles the forward pass and parameter initialization.
-
-### NEW_hyperparameter_optuna.py
-Runs Optuna hyperparameter optimization:
-- Samples hyperparameters (dropout, LR, threshold, etc.)
-- Performs full cross-validation inside each trial
-- Selects the best-performing configuration.
+Main script, that runs the whole GNN pipeline:
+- Loads structural connectivity and phenotype data.
+- Builds development/test splits and applies optional ComBat harmonization.
+- Runs 5-fold cross-validation to tune hyperparameters.
+- Trains the final GNN on all development subjects.
+- Performs inductive testing on unseen subjects and saves all results.
 
 ### args.py
-Stores all configurable hyperparameters:
-- GNN architecture
-- Training settings
-- Graph construction options
-- Dataset splitting
-- Harmonization and batching options
+Stores all the hyperparameters.
 
 ### data_processing.py
-Responsible for preparing the dataset:
-- Load SC matrices and flatten them
-- Apply feature selection (Ridge + RFE)
-- Compute RBF similarity
-- Compute phenotypic similarity (sex + age)
-- Build adjacency matrices
-- Apply ComBat harmonization
-- Perform stratified development/test split
-
-### metrics.py
-Implements evaluation metrics:
-- Accuracy, AUC, precision, recall, F1, specificity, NPV
+Handles dataset preparation:
+- Loads and flattens SC matrices.
+- Applies feature selection (Ridge + RFE).
+- Computes RBF + phenotypic similarity.
+- Builds adjacency matrices and applies ComBat harmonization.
+- Creates stratified development/test splits.
 
 ### train_and_test.py
-
-Contains training and evaluation logic:
+Contains training and evaluation:
 - 5-fold cross-validation with early stopping
 - Final model refitting on the full development set
 - Inductive testing (test subjects added one-by-one into the population graph)
 - Saves results, curves, and fold-level summaries.
 
+### GNNModel.py
+Defines the GNN architecture:
+- GraphConv (default), GAT, GINE, or ChebConv
+- Edge + feature dropout
+- Message passing
+- LayerNorm + ReLU / PReLU
+- MLP classifier head
+
+Handles the forward pass and parameter initialization.
+
+### metrics.py
+Computed evaluation metrics:
+- Accuracy, AUC, precision, recall, F1, specificity, NPV
+
 ### utils.py
+Provides helper functions for:
+- Loading phenotype values and computing phenotypic similarity (sex + age).
+- Loading SC matrices and flattening them into feature vectors.
+- Building population graphs.
+- Feature selection (Ridge + RFE).
 
-Helper functions for:
-- Plotting training curves
-- Summarizing cross-validation metrics
-- Formatting mean ± std statistics
+### hyperparameter_optuna.py
+Runs Optuna hyperparameter optimization:
+- Define search spaces for hyperparameters (dropout, LR, threshold, etc.)
+- Performs full cross-validation inside each trial
+- Saves the trial results to CSV
 
-.gitignore
 
-Excludes large files, temporary artifacts, and local environment files from version control.
 
-🔍 Short Summary (for the top of README)
+
+
 
