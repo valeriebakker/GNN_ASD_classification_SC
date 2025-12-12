@@ -10,31 +10,31 @@ It includes:
 - Hyperparameter optimization
 - Inductive test evaluation
 
-# Folder Structure & Script Descriptions
+# Folder structure & Script descriptions
 
 ## ABIDE_preprocessing/
 
 Scripts for converting raw diffusion MRI data into FA-weighted SC matrices.
 
 ### aal/ 
-Contains the AAL2 atlas used for region-based parcellation.
+Contains the AAL2 atlas used for ROI-based parcellation.
 
 ### combine_csv.py
-Merges dataset CSV files into a single phenotype file.
+Merges dataset CSV files into a single phenotype CSV.
 
 ### preproc_and_tractography.sh
-Full preprocessing pipeline:
-- DWI denoising and Gibbs removal
+Full DTI preprocessing pipeline:
+- Denoising and Gibbs removal
 - Eddy correction
 - Brain masking
-- Fiber orientation estimation and constrained spherical deconvolution (CSD)
+- FOD estimation and constrained spherical deconvolution (CSD)
 - Anatomically constrained tractography (ACT)
 - Creation of FA-weighted connectivity matrices
 
 This generates the SC features used by the GNN.
 
 ### run_all_subjects.sh
-Wrapper script for running the preprocessing + tractography pipeline on all subjects.
+Wrapper script for running preproc_and_tractography.sh on all subjects.
 
 ### show_connectivitymatrix.py
 Script for plotting individual or group-average SC matrices and inspecting connections.
@@ -45,11 +45,11 @@ Implements the population GNN, feature selection, harmonization, training, testi
 
 ### MAIN.py
 Main script, that runs the whole GNN pipeline:
-- Loads structural connectivity and phenotype data.
+- Loads SC matrices and phenotype data.
 - Builds development/test splits and applies optional ComBat harmonization.
-- Runs 5-fold cross-validation to tune hyperparameters.
+- Runs 5-fold cross-validation.
 - Trains the final GNN on all development subjects.
-- Performs inductive testing on unseen subjects and saves all results.
+- Performs inductive testing on test set and saves all results.
 
 ### args.py
 Stores all the hyperparameters.
@@ -57,7 +57,7 @@ Stores all the hyperparameters.
 ### data_processing.py
 Handles dataset preparation:
 - Loads and flattens SC matrices.
-- Applies feature selection (Ridge + RFE).
+- Applies feature selection.
 - Computes RBF + phenotypic similarity.
 - Builds adjacency matrices and applies ComBat harmonization.
 - Creates stratified development/test splits.
@@ -80,15 +80,15 @@ Defines the GNN architecture:
 Handles the forward pass and parameter initialization.
 
 ### metrics.py
-Computed evaluation metrics:
+Computes evaluation metrics:
 - Accuracy, AUC, precision, recall, F1, specificity, NPV
 
 ### utils.py
-Provides helper functions for:
+Provides functions for:
 - Loading phenotype values and computing phenotypic similarity (sex + age).
 - Loading SC matrices and flattening them into feature vectors.
 - Building population graphs.
-- Feature selection (Ridge + RFE).
+- Feature selection (Ridge).
 
 ### hyperparameter_optuna.py
 Runs Optuna hyperparameter optimization:
